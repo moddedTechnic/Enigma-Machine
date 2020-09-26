@@ -33,9 +33,14 @@ class App:
 
 		self.clock = Clock()
 
-		self.letters = {
-			
-		}
+		self.letters = [
+			{ 'letter': l, 'lit': False }
+			for l in [
+				'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+				  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+				    'Z', 'X', 'C', 'V', 'B', 'N', 'M',
+			]
+		]
 
 		self()
 
@@ -56,14 +61,16 @@ class App:
 	def render_keyboard(self):
 		self.rect(0xe17055, (0.1, 0.1), (0.8, 0.8))
 		for i in range(10):
-			self.render_button(Vector2(0.14 + i * 0.08, 0.16))
+			self.render_button(Vector2(0.14 + i * 0.08, 0.16), i)
 		for i in range(9):
-			self.render_button(Vector2(0.18 + i * 0.08, 0.36))
+			self.render_button(Vector2(0.18 + i * 0.08, 0.36), i + 10)
 		for i in range(7):
-			self.render_button(Vector2(0.22 + i * 0.08, 0.56))
+			self.render_button(Vector2(0.22 + i * 0.08, 0.56), i + 19)
 
-	def render_button(self, pos):
+	def render_button(self, pos, idx):
 		x, y = Vector2(pos).tuple(float)
+		l = self.letters[idx]
+		print(x, y, l)
 	
 		self.circle(0xfefefe, (x, y), 0.04)
 		self.circle(0xfefefe, (x, y + 0.09), 0.04)
