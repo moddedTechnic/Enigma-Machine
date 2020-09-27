@@ -13,13 +13,12 @@ from pygame.constants import (
 	JOYAXISMOTION as EVENT_JOY_AXIS_MOTION, JOYBALLMOTION as EVENT_JOY_BALL_MOTION, JOYHATMOTION as EVENT_JOY_HAT_MOTION,
 	JOYBUTTONUP as EVENT_JOY_BUTTON_UP, JOYBUTTONDOWN as EVENT_JOY_BUTTON_DOWN,
 	VIDEORESIZE as EVENT_VIDEO_RESIZE, VIDEOEXPOSE as EVENT_VIDEO_EXPOSE,
-	USER_EVENT as EVENT_USER,
+	USEREVENT as EVENT_USER,
 	AUDIODEVICEADDED as EVENT_AUDIO_DEVICE_ADDED, AUDIODEVICEREMOVED as EVENT_AUDIO_DEVICE_REMOVED,
 	FINGERMOTION as EVENT_FINGER_MOTION, FINGERDOWN as EVENT_FINGER_DOWN, FINGERUP as EVENT_FINGER_UP,
 	MULTIGESTURE as EVENT_MULTIGESTURE,
 	TEXTEDITING as EVENT_TEXT_EDITING, TEXTINPUT as EVENT_TEXT_INPUT,
 	DROPBEGIN as EVENT_DROP_BEGIN, DROPCOMPLETE as EVENT_DROP_COMPLETE, DROPFILE as EVENT_DROP_FILE, DROPTEXT as EVENT_DROP_TEXT,
-	MIDIIN as EVENT_MIDI_IN, MIDIOUT as EVENT_MIDI_OUT,
 )
 events = [
 	EVENT_QUIT,
@@ -35,7 +34,6 @@ events = [
 	EVENT_MULTIGESTURE,
 	EVENT_TEXT_EDITING, EVENT_TEXT_INPUT,
 	EVENT_DROP_BEGIN, EVENT_DROP_COMPLETE, EVENT_DROP_FILE, EVENT_DROP_TEXT,
-	EVENT_MIDI_IN, EVENT_MIDI_OUT,
 ]
 from pygame.display import (
 	set_mode as set_size,
@@ -58,6 +56,13 @@ from vector import Vector2
 def get_from_dict(d, k, default = None):
 	return d[k] if k in d else default
 
+def get_first_from_dict(d, *ks, default = None):
+	for k in ks:
+		v = get_from_dict(d, k)
+		if v is not None:
+			return v
+	return default
+
 colours = {}
 def Colour(c):
 	colour = c
@@ -73,6 +78,9 @@ def Colour(c):
 
 	return colour
 
+def rgb(r, g, b):
+	return Colour((r << 16) | (g << 8) | b)
+
 fonts = {}
 def Font(family, size = None):
 	if size is None:
@@ -80,10 +88,10 @@ def Font(family, size = None):
 	else:
 		font = family, size
 
-	if (family, size) in fonts:
-		return fonts[family, size]
+	if font in fonts:
+		return fonts[font]
 
-	f = _Font(family, size)
+	f = _Font(*font)
 	fonts[font] = f
 	return f
 
@@ -117,14 +125,16 @@ class Engine():
 		self.event_listeners = {}
 		for event in events:
 			self.event_listeners[event] = []
+		self.add_event_listener(EVENT_QUIT, self.on_quit)
 
 		self.setup()
+		self()
 
 	def __call__(self):
 		self.running = True
 		while self.running:
 			for event in get_events():
-				for listener in self.event_listeners[event]:
+				for listener in self.event_listeners[event.type]:
 					d = event.dict
 					if 'pos' in event.dict:
 						d['pos'] = Vector2(d['pos'])
@@ -146,3 +156,149 @@ class Engine():
 
 	def on_quit(self):
 		self.running = False
+
+	def filled_rectangle(self, **kwargs):
+		c = get_first_from_dict(kwargs, 'c', 'col', 'colour')
+		pos = get_from_dict(kwargs, 'pos')
+		size = get_from_dict(kwargs, 'size')
+		outline = get_from_dict(kwargs, 'outline')
+		scaled = get_from_dict(kwargs, 'scaled', default = False)
+
+		if None in (c, pos, size):
+			raise ValueError('Must provide colour, position and size')
+		
+		c = Colour(c)
+		pos = Vector2(pos)
+		size = Vector2(size)
+		outline = Colour(outline) if outline is not None else c
+
+		if not scaled:
+			pos *= self.size
+			size *= self.size
+
+		draw.filled_rectangle(
+			self.display,
+			( *(pos.tuple(int)), *(size.tuple(int)) ),
+			c
+		)
+
+		self.rectangle(
+			c=outline, pos=pos, size=size, scaled = True
+		)
+
+	def rectangle(self, **kwargs):
+		c = get_first_from_dict(kwargs, 'c', 'col', 'colour')
+		pos = get_from_dict(kwargs, 'pos')
+		size = get_from_dict(kwargs, 'size')
+		scaled = get_from_dict(kwargs, 'scaled', default = False)
+
+		if None in (c, pos, size):
+			raise ValueError('Must provide colour, position and size')
+		
+		c = Colour(c)
+		pos = Vector2(pos)
+		size = Vector2(size)
+
+		if not scaled:
+			pos *= self.size
+			size *= self.size
+
+		draw.rectangle(
+			self.display,
+			( *(pos.tuple(int)), *(size.tuple(int)) ),
+			c
+		)
+
+	def filled_circle(self, **kwargs):
+		c = get_first_from_dict(kwargs, 'c', 'col', 'colour')
+		pos = get_from_dict(kwargs, 'pos')
+		r = get_first_from_dict(kwargs, 'r', 'radius')
+		outline = get_from_dict(kwargs, 'outline')
+		scaled = get_from_dict(kwargs, 'scaled', default = False)
+
+		if None in (c, pos, r):
+			raise ValueError('Must provide colour, position and size')
+		
+		c = Colour(c)
+		pos = Vector2(pos)
+		outline = Colour(outline) if outline is not None else c
+
+		if not scaled:
+			pos *= self.size
+			r *= min(*self.size.tuple())
+
+		r = int(r)
+
+		draw.filled_circle(
+			self.display,
+			*(pos.tuple(int)),
+			r,
+			c
+		)
+
+		self.circle(
+			c=outline, pos=pos, r=r, scaled = True
+		)
+
+	def circle(self, **kwargs):
+		c = get_first_from_dict(kwargs, 'c', 'col', 'colour')
+		pos = get_from_dict(kwargs, 'pos')
+		r = get_first_from_dict(kwargs, 'r', 'radius')
+		scaled = get_from_dict(kwargs, 'scaled', default = False)
+
+		if None in (c, pos, r):
+			raise ValueError('Must provide colour, position and size')
+		
+		c = Colour(c)
+		pos = Vector2(pos)
+
+		if not scaled:
+			pos *= self.size
+			r *= min(*self.size.tuple())
+
+		r = int(r)
+
+		draw.filled_circle(
+			self.display,
+			*(pos.tuple(int)),
+			r,
+			c
+		)
+
+	def text(self, text, **kwargs):
+		f = get_first_from_dict(kwargs, 'f', 'font')
+		c = get_first_from_dict(kwargs, 'c', 'col', 'colour')
+		bg = get_first_from_dict(kwargs, 'bg', 'background')
+		pos = get_from_dict(kwargs, 'pos')
+		horiz_align = get_from_dict(kwargs, 'horiz_align', default=Engine.CENTERh)
+		vert_align = get_from_dict(kwargs, 'vert_align', default=Engine.CENTERv)
+		align = get_from_dict(kwargs, 'align', default=horiz_align | vert_align)
+		scaled = get_from_dict(kwargs, 'scaled', default=False)
+
+		f = Font(f)
+		c = Colour(c)
+		pos = Vector2(pos)
+
+		if not scaled:
+			pos *= self.size
+
+		text_surface = f.render(text, True, c, bg)
+		text_rect = text_surface.get_rect()
+
+		s = Vector2(text_rect.size)
+
+		if align & Engine.BOTTOM != 0:
+			text_rect.centery = pos.y - s.y
+		elif align & Engine.CENTERv != 0:
+			text_rect.centery = pos.y
+		elif align & Engine.TOP != 0:
+			text_rect.centery = pos.y + s.y
+
+		if align & Engine.LEFT != 0:
+			text_rect.centerx = pos.x - s.x
+		elif align & Engine.CENTERh != 0:
+			text_rect.centerx = pos.x
+		elif align & Engine.RIGHT != 0:
+			text_rect.centerx = pos.x + s.x
+
+		self.display.blit(text_surface, text_rect)
