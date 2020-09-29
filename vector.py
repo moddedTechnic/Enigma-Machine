@@ -1,3 +1,4 @@
+from math import sqrt
 
 class Vector2:
 	def __init__(self, x=0, y=0):
@@ -103,6 +104,12 @@ class Vector2:
 
 	def __pos__(self):
 		return Vector2(+self.x, +self.y)
+
+	def __abs__(self):
+		return sqrt(self.mag_sq())
+
+	def mag_sq(self):
+		return self.x ** 2 + self.y ** 2
 
 Vector2.zero = Vector2()
 Vector2.one = Vector2(1, 1)
