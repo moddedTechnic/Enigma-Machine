@@ -107,6 +107,9 @@ class Engine():
 	CENTER_LEFT, CENTER_CENTER, CENTER_RIGHT = CENTERh | LEFT, CENTERh | CENTERv, CENTERh | RIGHT
 	BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT = BOTTOM | LEFT,  BOTTOM | CENTERv,  BOTTOM | RIGHT
 
+	LEFT_MOUSE  = 1
+	RIGHT_MOUSE = 3
+
 	def __init__(self, **kwargs):
 
 		pg_init()
@@ -285,20 +288,24 @@ class Engine():
 		text_surface = f.render(text, True, c, bg)
 		text_rect = text_surface.get_rect()
 
-		s = Vector2(text_rect.size)
+		s = Vector2(text_rect.size) / 2
+
+		p = pos
 
 		if align & Engine.BOTTOM != 0:
-			text_rect.centery = pos.y - s.y
+			pos.y -= s.y
 		elif align & Engine.CENTERv != 0:
-			text_rect.centery = pos.y
+			pass # nothing needs doing
 		elif align & Engine.TOP != 0:
-			text_rect.centery = pos.y + s.y
+			pos.y += s.y
 
 		if align & Engine.LEFT != 0:
-			text_rect.centerx = pos.x - s.x
+			pos.x += s.x
 		elif align & Engine.CENTERh != 0:
-			text_rect.centerx = pos.x
+			pass # nothing needs doing
 		elif align & Engine.RIGHT != 0:
-			text_rect.centerx = pos.x + s.x
+			pos.x -= s.x
+
+		text_rect.center = p.tuple(int)
 
 		self.display.blit(text_surface, text_rect)
