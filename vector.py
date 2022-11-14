@@ -2,10 +2,10 @@ from math import sqrt
 
 class Vector2:
 	def __init__(self, x=0, y=0):
-		if type(x) in (tuple, list):
+		if isinstance(x, (tuple, list)):
 			x, y = x
 			
-		elif type(x) == Vector2:
+		elif isinstance(x, Vector2):
 			x, y = x.tuple()
 
 		self.x = x
@@ -22,9 +22,9 @@ class Vector2:
 
 	@staticmethod
 	def to_vector(other):
-		if type(other) in (int, float):
+		if isinstance(other, (int, float)):
 			return Vector2(other, other)
-		return other
+		return Vector2(other)
 
 	def __add__(self, other):
 		v = self.copy()
@@ -48,6 +48,7 @@ class Vector2:
 		return other + (-self)
 
 	def __isub__(self, other):
+		other = Vector2(other) if isinstance(other, (list, tuple)) else other
 		self += -other
 		return self
 
@@ -57,6 +58,8 @@ class Vector2:
 		return v
 
 	def __rmul__(self, other):
+		if isinstance(other, (int, float)):
+			return other * min(self.x, self.y)
 		return self * other
 
 	def __imul__(self, other):
